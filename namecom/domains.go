@@ -9,16 +9,16 @@ import (
 
 var _ = bytes.MinRead
 
-// List returns all domains
+// ListDomains returns all domains in the account. It omits some information that can be retrieved from GetDomain.
 func (n *NameCom) ListDomains(request *ListDomainsRequest) (*ListDomainsResponse, error) {
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	values := url.Values{}
-	if v := request.GetPerPage(); v != 0 {
-		values.Set("per_page", fmt.Sprintf("%d", v))
+	if request.PerPage != 0 {
+		values.Set("perPage", fmt.Sprintf("%d", request.PerPage))
 	}
-	if v := request.GetPage(); v != 0 {
-		values.Set("page", fmt.Sprintf("%d", v))
+	if request.Page != 0 {
+		values.Set("page", fmt.Sprintf("%d", request.Page))
 	}
 
 	body, err := n.Get(endpoint, values)
@@ -36,9 +36,9 @@ func (n *NameCom) ListDomains(request *ListDomainsRequest) (*ListDomainsResponse
 	return resp, nil
 }
 
-// Get returns details about a specific domain
+// GetDomain returns details about a specific domain
 func (n *NameCom) GetDomain(request *GetDomainRequest) (*Domain, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s", request.GetDomainName())
+	endpoint := fmt.Sprintf("/v4/domains/%s", request.DomainName)
 
 	values := url.Values{}
 
@@ -57,7 +57,7 @@ func (n *NameCom) GetDomain(request *GetDomainRequest) (*Domain, error) {
 	return resp, nil
 }
 
-// Create purchases a new domain. Domains that are not regularly priced require the purchase_price field to be specified.
+// CreateDomain purchases a new domain. Domains that are not regularly priced require the purchase_price field to be specified.
 func (n *NameCom) CreateDomain(request *CreateDomainRequest) (*CreateDomainResponse, error) {
 	endpoint := fmt.Sprintf("/v4/domains")
 
@@ -79,14 +79,14 @@ func (n *NameCom) CreateDomain(request *CreateDomainRequest) (*CreateDomainRespo
 	return resp, nil
 }
 
-// Update can change only the autorenew_enabled field, since all other modifications require an update at the registry, which would make this command non-idempotent.
-func (n *NameCom) UpdateDomain(request *Domain) (*Domain, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s", request.GetDomainName())
+// EnableAutorenew enables the domain to be automatically renewed when it gets close to expiring.
+func (n *NameCom) EnableAutorenew(request *EnableAutorenewForDomainRequest) (*Domain, error) {
+	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
 	json.NewEncoder(post).Encode(request)
 
-	body, err := n.Put(endpoint, post)
+	body, err := n.Post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,29 @@ func (n *NameCom) UpdateDomain(request *Domain) (*Domain, error) {
 	return resp, nil
 }
 
-// Renew will renew a domain. Purchase_price is required if the renewal is not regularly priced.
+// DisableAutorenew disables automatic renewals, thus requiring the domain to be renewed manually.
+func (n *NameCom) DisableAutorenew(request *DisableAutorenewForDomainRequest) (*Domain, error) {
+	endpoint := fmt.Sprintf("/v4/domains")
+
+	post := &bytes.Buffer{}
+	json.NewEncoder(post).Encode(request)
+
+	body, err := n.Post(endpoint, post)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &Domain{}
+
+	err = json.NewDecoder(body).Decode(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// RenewDomain will renew a domain. Purchase_price is required if the renewal is not regularly priced.
 func (n *NameCom) RenewDomain(request *RenewDomainRequest) (*RenewDomainResponse, error) {
 	endpoint := fmt.Sprintf("/v4/domains")
 
@@ -123,13 +145,13 @@ func (n *NameCom) RenewDomain(request *RenewDomainRequest) (*RenewDomainResponse
 	return resp, nil
 }
 
-// GetAuthCode returns the Transfer Authorization Code for the domain.
+// GetAuthCodeForDomain returns the Transfer Authorization Code for the domain.
 func (n *NameCom) GetAuthCodeForDomain(request *AuthCodeRequest) (*AuthCodeResponse, error) {
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	values := url.Values{}
-	if v := request.GetDomainName(); v != "" {
-		values.Set("domain_name", v)
+	if request.DomainName != "" {
+		values.Set("domainName", request.DomainName)
 	}
 
 	body, err := n.Get(endpoint, values)
@@ -160,50 +182,6 @@ func (n *NameCom) PurchasePrivacy(request *PrivacyRequest) (*PrivacyResponse, er
 	}
 
 	resp := &PrivacyResponse{}
-
-	err = json.NewDecoder(body).Decode(resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-// Search will perform a search for specified keywords.
-func (n *NameCom) Search(request *SearchRequest) (*SearchResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains:search")
-
-	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
-
-	body, err := n.Post(endpoint, post)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &SearchResponse{}
-
-	err = json.NewDecoder(body).Decode(resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-// SearchStream will return JSON encoded SearchResults as they are recieved from the registry. This can allow clients to react to results before the search is fully completed.
-func (n *NameCom) SearchStream(request *SearchRequest) (*SearchResult, error) {
-	endpoint := fmt.Sprintf("/v4/domains:searchStream")
-
-	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
-
-	body, err := n.Post(endpoint, post)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &SearchResult{}
 
 	err = json.NewDecoder(body).Decode(resp)
 	if err != nil {
@@ -292,6 +270,72 @@ func (n *NameCom) UnlockDomain(request *UnlockDomainRequest) (*Domain, error) {
 	}
 
 	resp := &Domain{}
+
+	err = json.NewDecoder(body).Decode(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// CheckAvailability will check a list of domains to see if they are purchaseable. A Maximum of 50 domains can be specified.
+func (n *NameCom) CheckAvailability(request *AvailabilityRequest) (*SearchResponse, error) {
+	endpoint := fmt.Sprintf("/v4/domains:checkAvailability")
+
+	post := &bytes.Buffer{}
+	json.NewEncoder(post).Encode(request)
+
+	body, err := n.Post(endpoint, post)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &SearchResponse{}
+
+	err = json.NewDecoder(body).Decode(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// Search will perform a search for specified keywords.
+func (n *NameCom) Search(request *SearchRequest) (*SearchResponse, error) {
+	endpoint := fmt.Sprintf("/v4/domains:search")
+
+	post := &bytes.Buffer{}
+	json.NewEncoder(post).Encode(request)
+
+	body, err := n.Post(endpoint, post)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &SearchResponse{}
+
+	err = json.NewDecoder(body).Decode(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// SearchStream will return JSON encoded SearchResults as they are recieved from the registry. This can allow clients to react to results before the search is fully completed.
+func (n *NameCom) SearchStream(request *SearchRequest) (*SearchResult, error) {
+	endpoint := fmt.Sprintf("/v4/domains:searchStream")
+
+	post := &bytes.Buffer{}
+	json.NewEncoder(post).Encode(request)
+
+	body, err := n.Post(endpoint, post)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &SearchResult{}
 
 	err = json.NewDecoder(body).Decode(resp)
 	if err != nil {

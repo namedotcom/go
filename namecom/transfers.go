@@ -14,14 +14,11 @@ func (n *NameCom) ListTransfers(request *ListTransfersRequest) (*ListTransfersRe
 	endpoint := fmt.Sprintf("/v4/transfers")
 
 	values := url.Values{}
-	if v := request.GetDomainName(); v != "" {
-		values.Set("domain_name", v)
+	if request.PerPage != 0 {
+		values.Set("perPage", fmt.Sprintf("%d", request.PerPage))
 	}
-	if v := request.GetPerPage(); v != 0 {
-		values.Set("per_page", fmt.Sprintf("%d", v))
-	}
-	if v := request.GetPage(); v != 0 {
-		values.Set("page", fmt.Sprintf("%d", v))
+	if request.Page != 0 {
+		values.Set("page", fmt.Sprintf("%d", request.Page))
 	}
 
 	body, err := n.Get(endpoint, values)
@@ -41,7 +38,7 @@ func (n *NameCom) ListTransfers(request *ListTransfersRequest) (*ListTransfersRe
 
 // GetTransfer gets details for a transfer request.
 func (n *NameCom) GetTransfer(request *GetTransferRequest) (*Transfer, error) {
-	endpoint := fmt.Sprintf("/v4/transfers/%s", request.GetDomainName())
+	endpoint := fmt.Sprintf("/v4/transfers/%s", request.DomainName)
 
 	values := url.Values{}
 

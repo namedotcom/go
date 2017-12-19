@@ -11,7 +11,7 @@ var _ = bytes.MinRead
 
 // ListDNSSECs lists all of the DNSSEC keys registered with the registry.
 func (n *NameCom) ListDNSSECs(request *ListDNSSECsRequest) (*ListDNSSECsResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec", request.GetDomainName())
+	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec", request.DomainName)
 
 	values := url.Values{}
 
@@ -32,7 +32,7 @@ func (n *NameCom) ListDNSSECs(request *ListDNSSECsRequest) (*ListDNSSECsResponse
 
 // GetDNSSEC retrieves the details for a key registered with the registry.
 func (n *NameCom) GetDNSSEC(request *GetDNSSECRequest) (*DNSSEC, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec/%s", request.GetDomainName(), request.GetDigest())
+	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec/%s", request.DomainName, request.Digest)
 
 	values := url.Values{}
 
@@ -53,7 +53,7 @@ func (n *NameCom) GetDNSSEC(request *GetDNSSECRequest) (*DNSSEC, error) {
 
 // CreateDNSSEC registers a DNSSEC key with the registry.
 func (n *NameCom) CreateDNSSEC(request *DNSSEC) (*DNSSEC, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec", request.GetDomainName())
+	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec", request.DomainName)
 
 	post := &bytes.Buffer{}
 	json.NewEncoder(post).Encode(request)
@@ -75,7 +75,7 @@ func (n *NameCom) CreateDNSSEC(request *DNSSEC) (*DNSSEC, error) {
 
 // DeleteDNSSEC removes a DNSSEC key from the registry.
 func (n *NameCom) DeleteDNSSEC(request *DeleteDNSSECRequest) (*EmptyResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec/%s", request.GetDomainName(), request.GetDigest())
+	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec/%s", request.DomainName, request.Digest)
 
 	post := &bytes.Buffer{}
 	json.NewEncoder(post).Encode(request)

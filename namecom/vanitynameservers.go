@@ -9,16 +9,16 @@ import (
 
 var _ = bytes.MinRead
 
-// ListVanityNameservers lists all nameservers registered with the registry.
+// ListVanityNameservers lists all nameservers registered with the registry. It omits the IP addresses from the response. Those can be found from calling GetVanityNameserver.
 func (n *NameCom) ListVanityNameservers(request *ListVanityNameserversRequest) (*ListVanityNameserversResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers", request.GetDomainName())
+	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers", request.DomainName)
 
 	values := url.Values{}
-	if v := request.GetPerPage(); v != 0 {
-		values.Set("per_page", fmt.Sprintf("%d", v))
+	if request.PerPage != 0 {
+		values.Set("perPage", fmt.Sprintf("%d", request.PerPage))
 	}
-	if v := request.GetPage(); v != 0 {
-		values.Set("page", fmt.Sprintf("%d", v))
+	if request.Page != 0 {
+		values.Set("page", fmt.Sprintf("%d", request.Page))
 	}
 
 	body, err := n.Get(endpoint, values)
@@ -38,7 +38,7 @@ func (n *NameCom) ListVanityNameservers(request *ListVanityNameserversRequest) (
 
 // GetVanityNameserver gets the details for a vanity nameserver registered with the registry.
 func (n *NameCom) GetVanityNameserver(request *GetVanityNameserverRequest) (*VanityNameserver, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers/%s", request.GetDomainName(), request.GetHostname())
+	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers/%s", request.DomainName, request.Hostname)
 
 	values := url.Values{}
 
@@ -58,8 +58,8 @@ func (n *NameCom) GetVanityNameserver(request *GetVanityNameserverRequest) (*Van
 }
 
 // CreateVanityNameserver registers a nameserver with the registry.
-func (n *NameCom) CreateVanityNameserver(request *CreateVanityNameserverRequest) (*VanityNameserver, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers", request.GetDomainName())
+func (n *NameCom) CreateVanityNameserver(request *VanityNameserver) (*VanityNameserver, error) {
+	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers", request.DomainName)
 
 	post := &bytes.Buffer{}
 	json.NewEncoder(post).Encode(request)
@@ -81,7 +81,7 @@ func (n *NameCom) CreateVanityNameserver(request *CreateVanityNameserverRequest)
 
 // UpdateVanityNameserver allows you to update the glue record IP addresses at the registry.
 func (n *NameCom) UpdateVanityNameserver(request *VanityNameserver) (*VanityNameserver, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers/%s", request.GetDomainName(), request.GetHostname())
+	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers/%s", request.DomainName, request.Hostname)
 
 	post := &bytes.Buffer{}
 	json.NewEncoder(post).Encode(request)
@@ -103,7 +103,7 @@ func (n *NameCom) UpdateVanityNameserver(request *VanityNameserver) (*VanityName
 
 // DeleteVanityNameserver unregisteres the nameserver at the registry. This might fail if the registry believes the nameserver is in use.
 func (n *NameCom) DeleteVanityNameserver(request *DeleteVanityNameserverRequest) (*EmptyResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers/%s", request.GetDomainName(), request.GetHostname())
+	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers/%s", request.DomainName, request.Hostname)
 
 	post := &bytes.Buffer{}
 	json.NewEncoder(post).Encode(request)
