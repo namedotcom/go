@@ -595,6 +595,58 @@ type CancelTransferRequest struct {
 }
 
 // 
+type URLForwarding struct {
+    // DomainName is the domain part of the hostname to forward.
+    DomainName string `json:"domainName,omitempty"`
+    // Host is the entirety of the hostname. i.e. www.example.org
+    Host string `json:"host,omitempty"`
+    // ForwardsTo is the URL this host will be forwarded to.
+    ForwardsTo string `json:"forwardsTo,omitempty"`
+    // Type is the type of forwarding. Valid types are: Masked - This retains the original domain in the address bar and will not reveal or display the actual destination URL. If you are forwarding knowledgebase.ninja to Name.com, the address bar will say knowledgebase.ninja. This is sometimes called iframe forwarding. And: Redirect - This does not retain the original domain in the address bar, so the user will see it change and realize they were forwarded from the URL they originally entered. If you are forwarding knowledgebase.ninja to Name.com, the address bar will say Name.com. This is also called 301 forwarding.
+    Type string `json:"type,omitempty"`
+    // Title is the title for the html page to use if the type is masked. Values are ignored for types other then "masked".
+    Title string `json:"title,omitempty"`
+    // Meta is the meta tags to add to the html page if the type is masked. ex: "<meta name='keywords' content='fish, denver, platte'>". Values are ignored for types other then "masked".
+    Meta string `json:"meta,omitempty"`
+}
+
+// 
+type ListURLForwardingsRequest struct {
+    // DomainName is the domain to list URL forwarding entries for.
+    DomainName string `json:"domainName,omitempty"`
+    // Per Page is the number of records to return per request. Per Page defaults to 1,000.
+    PerPage int32 `json:"perPage,omitempty"`
+    // Page is which page to return.
+    Page int32 `json:"page,omitempty"`
+}
+
+// 
+type ListURLForwardingsResponse struct {
+    // URLForwarding is the list of URL forwarding entries.
+    UrlForwarding []*URLForwarding `json:"urlForwarding,omitempty"`
+    // NextPage is the identifier for the next page of results. It is only populated if there is another page of results after the current page.
+    NextPage int32 `json:"nextPage,omitempty"`
+    // LastPage is the identifier for the final page of results. It is only populated if there is another page of results after the current page.
+    LastPage int32 `json:"lastPage,omitempty"`
+}
+
+// 
+type GetURLForwardingRequest struct {
+    // DomainName is the domain to list URL forwarding entry for.
+    DomainName string `json:"domainName,omitempty"`
+    // Host is the part of the domain name before the domain. i.e. www is the host for www.example.org.
+    Host string `json:"host,omitempty"`
+}
+
+// 
+type DeleteURLForwardingRequest struct {
+    // DomainName is the domain to delete the URL forwardind entry from.
+    DomainName string `json:"domainName,omitempty"`
+    // Host is the part of the domain name before the domain. i.e. www is the host for www.example.org.
+    Host string `json:"host,omitempty"`
+}
+
+// 
 type VanityNameserver struct {
     // DomainName is the domain the nameserver is a subdomain of.
     DomainName string `json:"domainName,omitempty"`
