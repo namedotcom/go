@@ -21,7 +21,7 @@ func (n *NameCom) ListVanityNameservers(request *ListVanityNameserversRequest) (
 		values.Set("page", fmt.Sprintf("%d", request.Page))
 	}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (n *NameCom) GetVanityNameserver(request *GetVanityNameserverRequest) (*Van
 
 	values := url.Values{}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,12 @@ func (n *NameCom) CreateVanityNameserver(request *VanityNameserver) (*VanityName
 	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers", request.DomainName)
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +87,12 @@ func (n *NameCom) UpdateVanityNameserver(request *VanityNameserver) (*VanityName
 	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers/%s", request.DomainName, request.Hostname)
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Put(endpoint, post)
+	body, err := n.put(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -106,9 +112,12 @@ func (n *NameCom) DeleteVanityNameserver(request *DeleteVanityNameserverRequest)
 	endpoint := fmt.Sprintf("/v4/domains/%s/vanity_nameservers/%s", request.DomainName, request.Hostname)
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Delete(endpoint, post)
+	body, err := n.delete(endpoint, post)
 	if err != nil {
 		return nil, err
 	}

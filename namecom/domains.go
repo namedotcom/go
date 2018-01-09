@@ -21,7 +21,7 @@ func (n *NameCom) ListDomains(request *ListDomainsRequest) (*ListDomainsResponse
 		values.Set("page", fmt.Sprintf("%d", request.Page))
 	}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (n *NameCom) GetDomain(request *GetDomainRequest) (*Domain, error) {
 
 	values := url.Values{}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,12 @@ func (n *NameCom) CreateDomain(request *CreateDomainRequest) (*CreateDomainRespo
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +87,12 @@ func (n *NameCom) EnableAutorenew(request *EnableAutorenewForDomainRequest) (*Do
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -106,9 +112,12 @@ func (n *NameCom) DisableAutorenew(request *DisableAutorenewForDomainRequest) (*
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -128,9 +137,12 @@ func (n *NameCom) RenewDomain(request *RenewDomainRequest) (*RenewDomainResponse
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +166,7 @@ func (n *NameCom) GetAuthCodeForDomain(request *AuthCodeRequest) (*AuthCodeRespo
 		values.Set("domainName", request.DomainName)
 	}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -174,9 +186,12 @@ func (n *NameCom) PurchasePrivacy(request *PrivacyRequest) (*PrivacyResponse, er
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -196,9 +211,12 @@ func (n *NameCom) SetNameservers(request *SetNameserversRequest) (*Domain, error
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -218,9 +236,12 @@ func (n *NameCom) SetContacts(request *SetContactsRequest) (*Domain, error) {
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -240,9 +261,12 @@ func (n *NameCom) LockDomain(request *LockDomainRequest) (*Domain, error) {
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -262,9 +286,12 @@ func (n *NameCom) UnlockDomain(request *UnlockDomainRequest) (*Domain, error) {
 	endpoint := fmt.Sprintf("/v4/domains")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -284,9 +311,12 @@ func (n *NameCom) CheckAvailability(request *AvailabilityRequest) (*SearchRespon
 	endpoint := fmt.Sprintf("/v4/domains:checkAvailability")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -306,9 +336,12 @@ func (n *NameCom) Search(request *SearchRequest) (*SearchResponse, error) {
 	endpoint := fmt.Sprintf("/v4/domains:search")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -323,14 +356,17 @@ func (n *NameCom) Search(request *SearchRequest) (*SearchResponse, error) {
 	return resp, nil
 }
 
-// SearchStream will return JSON encoded SearchResults as they are recieved from the registry. This can allow clients to react to results before the search is fully completed.
+// SearchStream will return JSON encoded SearchResults as they are recieved from the registry. The SearchResults are separated by newlines. This can allow clients to react to results before the search is fully completed.
 func (n *NameCom) SearchStream(request *SearchRequest) (*SearchResult, error) {
 	endpoint := fmt.Sprintf("/v4/domains:searchStream")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}

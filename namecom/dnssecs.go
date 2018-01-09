@@ -15,7 +15,7 @@ func (n *NameCom) ListDNSSECs(request *ListDNSSECsRequest) (*ListDNSSECsResponse
 
 	values := url.Values{}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (n *NameCom) GetDNSSEC(request *GetDNSSECRequest) (*DNSSEC, error) {
 
 	values := url.Values{}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,12 @@ func (n *NameCom) CreateDNSSEC(request *DNSSEC) (*DNSSEC, error) {
 	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec", request.DomainName)
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +81,12 @@ func (n *NameCom) DeleteDNSSEC(request *DeleteDNSSECRequest) (*EmptyResponse, er
 	endpoint := fmt.Sprintf("/v4/domains/%s/dnssec/%s", request.DomainName, request.Digest)
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Delete(endpoint, post)
+	body, err := n.delete(endpoint, post)
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ func (n *NameCom) HelloFunc(request *HelloRequest) (*HelloResponse, error) {
 
 	values := url.Values{}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}

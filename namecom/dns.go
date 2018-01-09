@@ -21,7 +21,7 @@ func (n *NameCom) ListRecords(request *ListRecordsRequest) (*ListRecordsResponse
 		values.Set("page", fmt.Sprintf("%d", request.Page))
 	}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -38,11 +38,11 @@ func (n *NameCom) ListRecords(request *ListRecordsRequest) (*ListRecordsResponse
 
 // GetRecord returns details about an individual record.
 func (n *NameCom) GetRecord(request *GetRecordRequest) (*Record, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/records/%d", request.DomainName, request.Id)
+	endpoint := fmt.Sprintf("/v4/domains/%s/records/%d", request.DomainName, request.ID)
 
 	values := url.Values{}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,12 @@ func (n *NameCom) CreateRecord(request *Record) (*Record, error) {
 	endpoint := fmt.Sprintf("/v4/domains/%s/records", request.DomainName)
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -81,12 +84,15 @@ func (n *NameCom) CreateRecord(request *Record) (*Record, error) {
 
 // UpdateRecord replaces the record with the new record that is passed.
 func (n *NameCom) UpdateRecord(request *Record) (*Record, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/records/%d", request.DomainName, request.Id)
+	endpoint := fmt.Sprintf("/v4/domains/%s/records/%d", request.DomainName, request.ID)
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Put(endpoint, post)
+	body, err := n.put(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -103,12 +109,15 @@ func (n *NameCom) UpdateRecord(request *Record) (*Record, error) {
 
 // DeleteRecord deletes a record from the zone.
 func (n *NameCom) DeleteRecord(request *DeleteRecordRequest) (*EmptyResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains/%s/records/%d", request.DomainName, request.Id)
+	endpoint := fmt.Sprintf("/v4/domains/%s/records/%d", request.DomainName, request.ID)
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Delete(endpoint, post)
+	body, err := n.delete(endpoint, post)
 	if err != nil {
 		return nil, err
 	}

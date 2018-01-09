@@ -9,7 +9,7 @@ import (
 
 var _ = bytes.MinRead
 
-// ListTransfers lists all pending transfer in requests.
+// ListTransfers lists all pending transfer in requests. To get the information related to a non-pending transfer, you can use the GetTransfer function for that.
 func (n *NameCom) ListTransfers(request *ListTransfersRequest) (*ListTransfersResponse, error) {
 	endpoint := fmt.Sprintf("/v4/transfers")
 
@@ -21,7 +21,7 @@ func (n *NameCom) ListTransfers(request *ListTransfersRequest) (*ListTransfersRe
 		values.Set("page", fmt.Sprintf("%d", request.Page))
 	}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (n *NameCom) GetTransfer(request *GetTransferRequest) (*Transfer, error) {
 
 	values := url.Values{}
 
-	body, err := n.Get(endpoint, values)
+	body, err := n.get(endpoint, values)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,12 @@ func (n *NameCom) CreateTransfer(request *CreateTransferRequest) (*CreateTransfe
 	endpoint := fmt.Sprintf("/v4/transfers")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +87,12 @@ func (n *NameCom) CancelTransfer(request *CancelTransferRequest) (*Transfer, err
 	endpoint := fmt.Sprintf("/v4/transfers")
 
 	post := &bytes.Buffer{}
-	json.NewEncoder(post).Encode(request)
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
 
-	body, err := n.Post(endpoint, post)
+	body, err := n.post(endpoint, post)
 	if err != nil {
 		return nil, err
 	}
