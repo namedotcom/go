@@ -12,7 +12,7 @@ To start working with this package, create a client with user credentials
 
 To check if the username and token are correct using the HelloFunc endpoint
 
-    response, err := nc.HelloFunc(&HelloRequest{})
+    response, err := nc.HelloFunc(&namecom.HelloRequest{})
     if err != nil {
         // TODO: handle error
     }
