@@ -10,7 +10,7 @@ import (
 var _ = bytes.MinRead
 
 // HelloFunc returns some information about the API server.
-func (n *NameCom) HelloFunc(request *HelloRequest) (*HelloResponse, error) {
+func (n *NameCom) HelloFunc() (*HelloResponse, error) {
 	endpoint := fmt.Sprintf("/v4/hello")
 
 	values := url.Values{}
