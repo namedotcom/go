@@ -9,7 +9,7 @@ import (
 
 var _ = bytes.MinRead
 
-// ListEmailForwardings returns a pagenated list of email forwarding entries for a domain.
+// ListEmailForwardings returns a paginated list of email forwarding entries for a domain.
 func (n *NameCom) ListEmailForwardings(request *ListEmailForwardingsRequest) (*ListEmailForwardingsResponse, error) {
 	endpoint := fmt.Sprintf("/v4/domains/%s/email/forwarding", request.DomainName)
 
