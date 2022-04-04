@@ -82,9 +82,59 @@ func (n *NameCom) CreateDomain(request *CreateDomainRequest) (*CreateDomainRespo
 	return resp, nil
 }
 
+// EnableWhoisPrivacy enables the domain to be private
+func (n *NameCom) EnableWhoisPrivacy(request *EnableWhoisPrivacyForDomainRequest) (*Domain, error) {
+	endpoint := fmt.Sprintf("/v4/domains/%s:enableWhoisPrivacy", request.DomainName)
+
+	post := &bytes.Buffer{}
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := n.post(endpoint, post)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &Domain{}
+
+	err = json.NewDecoder(body).Decode(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// DisableWhoisPrivacy disables domain privacy
+func (n *NameCom) DisableWhoisPrivacy(request *DisableWhoisPrivacyForDomainRequest) (*Domain, error) {
+	endpoint := fmt.Sprintf("/v4/domains/%s:disableWhoisPrivacy", request.DomainName)
+
+	post := &bytes.Buffer{}
+	err := json.NewEncoder(post).Encode(request)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := n.post(endpoint, post)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &Domain{}
+
+	err = json.NewDecoder(body).Decode(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 // EnableAutorenew enables the domain to be automatically renewed when it gets close to expiring.
 func (n *NameCom) EnableAutorenew(request *EnableAutorenewForDomainRequest) (*Domain, error) {
-	endpoint := fmt.Sprintf("/v4/domains")
+	endpoint := fmt.Sprintf("/v4/domains/%s:enableAutorenew", request.DomainName)
 
 	post := &bytes.Buffer{}
 	err := json.NewEncoder(post).Encode(request)
@@ -109,7 +159,7 @@ func (n *NameCom) EnableAutorenew(request *EnableAutorenewForDomainRequest) (*Do
 
 // DisableAutorenew disables automatic renewals, thus requiring the domain to be renewed manually.
 func (n *NameCom) DisableAutorenew(request *DisableAutorenewForDomainRequest) (*Domain, error) {
-	endpoint := fmt.Sprintf("/v4/domains")
+	endpoint := fmt.Sprintf("/v4/domains/%s:disableAutorenew", request.DomainName)
 
 	post := &bytes.Buffer{}
 	err := json.NewEncoder(post).Encode(request)
@@ -134,7 +184,7 @@ func (n *NameCom) DisableAutorenew(request *DisableAutorenewForDomainRequest) (*
 
 // RenewDomain will renew a domain. Purchase_price is required if the renewal is not regularly priced.
 func (n *NameCom) RenewDomain(request *RenewDomainRequest) (*RenewDomainResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains")
+	endpoint := fmt.Sprintf("/v4/domains/%s:renew", request.DomainName)
 
 	post := &bytes.Buffer{}
 	err := json.NewEncoder(post).Encode(request)
@@ -159,12 +209,9 @@ func (n *NameCom) RenewDomain(request *RenewDomainRequest) (*RenewDomainResponse
 
 // GetAuthCodeForDomain returns the Transfer Authorization Code for the domain.
 func (n *NameCom) GetAuthCodeForDomain(request *AuthCodeRequest) (*AuthCodeResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains")
+	endpoint := fmt.Sprintf("/v4/domains/%s:getAuthCode", request.DomainName)
 
 	values := url.Values{}
-	if request.DomainName != "" {
-		values.Set("domainName", request.DomainName)
-	}
 
 	body, err := n.get(endpoint, values)
 	if err != nil {
@@ -183,7 +230,7 @@ func (n *NameCom) GetAuthCodeForDomain(request *AuthCodeRequest) (*AuthCodeRespo
 
 // PurchasePrivacy will add Whois Privacy protection to a domain or will an renew existing subscription.
 func (n *NameCom) PurchasePrivacy(request *PrivacyRequest) (*PrivacyResponse, error) {
-	endpoint := fmt.Sprintf("/v4/domains")
+	endpoint := fmt.Sprintf("/v4/domains/%s:purchasePrivacy", request.DomainName)
 
 	post := &bytes.Buffer{}
 	err := json.NewEncoder(post).Encode(request)
@@ -233,7 +280,7 @@ func (n *NameCom) SetNameservers(request *SetNameserversRequest) (*Domain, error
 
 // SetContacts will set the contacts for the Domain.
 func (n *NameCom) SetContacts(request *SetContactsRequest) (*Domain, error) {
-	endpoint := fmt.Sprintf("/v4/domains")
+	endpoint := fmt.Sprintf("/v4/domains/%s:setContacts", request.DomainName)
 
 	post := &bytes.Buffer{}
 	err := json.NewEncoder(post).Encode(request)
@@ -256,9 +303,9 @@ func (n *NameCom) SetContacts(request *SetContactsRequest) (*Domain, error) {
 	return resp, nil
 }
 
-// LockDomain will lock a domain so that it cannot be transfered to another registrar.
+// LockDomain will lock a domain so that it cannot be transferred to another registrar.
 func (n *NameCom) LockDomain(request *LockDomainRequest) (*Domain, error) {
-	endpoint := fmt.Sprintf("/v4/domains")
+	endpoint := fmt.Sprintf("/v4/domains/%s:lock", request.DomainName)
 
 	post := &bytes.Buffer{}
 	err := json.NewEncoder(post).Encode(request)
@@ -281,9 +328,9 @@ func (n *NameCom) LockDomain(request *LockDomainRequest) (*Domain, error) {
 	return resp, nil
 }
 
-// UnlockDomain will unlock a domain so that it can be transfered to another registrar.
+// UnlockDomain will unlock a domain so that it can be transferred to another registrar.
 func (n *NameCom) UnlockDomain(request *UnlockDomainRequest) (*Domain, error) {
-	endpoint := fmt.Sprintf("/v4/domains")
+	endpoint := fmt.Sprintf("/v4/domains/%s:unlock", request.DomainName)
 
 	post := &bytes.Buffer{}
 	err := json.NewEncoder(post).Encode(request)
@@ -306,7 +353,7 @@ func (n *NameCom) UnlockDomain(request *UnlockDomainRequest) (*Domain, error) {
 	return resp, nil
 }
 
-// CheckAvailability will check a list of domains to see if they are purchaseable. A Maximum of 50 domains can be specified.
+// CheckAvailability will check a list of domains to see if they are purchasable. A Maximum of 50 domains can be specified.
 func (n *NameCom) CheckAvailability(request *AvailabilityRequest) (*SearchResponse, error) {
 	endpoint := fmt.Sprintf("/v4/domains:checkAvailability")
 
@@ -356,7 +403,7 @@ func (n *NameCom) Search(request *SearchRequest) (*SearchResponse, error) {
 	return resp, nil
 }
 
-// SearchStream will return JSON encoded SearchResults as they are recieved from the registry. The SearchResults are separated by newlines. This can allow clients to react to results before the search is fully completed.
+// SearchStream will return JSON encoded SearchResults as they are received from the registry. The SearchResults are separated by newlines. This can allow clients to react to results before the search is fully completed.
 func (n *NameCom) SearchStream(request *SearchRequest) (*SearchResult, error) {
 	endpoint := fmt.Sprintf("/v4/domains:searchStream")
 

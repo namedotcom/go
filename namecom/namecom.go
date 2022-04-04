@@ -22,12 +22,12 @@ package namecom
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // NameCom is a client for connecting to the Name.com API.
@@ -41,7 +41,7 @@ type NameCom struct {
 // New creates a new NameCom client using the production environment server endpoint.
 func New(user, token string) *NameCom {
 	return &NameCom{
-		Server: "api.name.com",
+		Server: "https://api.name.com",
 		User:   user,
 		Token:  token,
 		Client: &http.Client{
@@ -53,7 +53,19 @@ func New(user, token string) *NameCom {
 // Test creates a new NameCom client using the test environment server enpoint.
 func Test(user, token string) *NameCom {
 	return &NameCom{
-		Server: "api.dev.name.com",
+		Server: "https://api.dev.name.com",
+		User:   user,
+		Token:  token,
+		Client: &http.Client{
+			Timeout: 10 * time.Second,
+		},
+	}
+}
+
+// Test creates a new NameCom client using the test environment server enpoint.
+func Mock(user, token string, server string) *NameCom {
+	return &NameCom{
+		Server: server,
 		User:   user,
 		Token:  token,
 		Client: &http.Client{
@@ -71,10 +83,10 @@ func (n *NameCom) errorResponse(resp *http.Response) error {
 	er := &ErrorResponse{}
 	err := json.NewDecoder(resp.Body).Decode(er)
 	if err != nil {
-		return errors.Wrap(err, "api returned unexpected response")
+		return fmt.Errorf("api returned unexpected response: %s", err)
 	}
 
-	return errors.WithStack(er)
+	return fmt.Errorf("got error: %w", er)
 }
 
 func (n *NameCom) get(endpoint string, values url.Values) (io.Reader, error) {
@@ -107,7 +119,7 @@ func (n *NameCom) doRequest(method, endpoint string, post io.Reader) (io.Reader,
 		n.Client = &http.Client{Timeout: 10 * time.Second}
 	}
 
-	url := "https://" + n.Server + endpoint
+	url := n.Server + endpoint
 
 	req, err := http.NewRequest(method, url, post)
 	if err != nil {
@@ -138,111 +150,6 @@ type ErrorResponse struct {
 	Message string `json:"message,omitempty"`
 	// Details may have some additional details about the error.
 	Details string `json:"details,omitempty"`
-}
-
-// Record is an individual DNS resource record.
-type Record struct {
-	// Unique record id. Value is ignored on Create, and must match the URI on Update.
-	ID int32 `json:"id,omitempty"`
-	// DomainName is the zone that the record belongs to.
-	DomainName string `json:"domainName,omitempty"`
-	// Host is the hostname relative to the zone: e.g. for a record for blog.example.org, domain would be "example.org" and host would be "blog".
-	// An apex record would be specified by either an empty host "" or "@".
-	// A SRV record would be specified by "_{service}._{protocal}.{host}": e.g. "_sip._tcp.phone" for _sip._tcp.phone.example.org.
-	Host string `json:"host,omitempty"`
-	// FQDN is the Fully Qualified Domain Name. It is the combination of the host and the domain name. It always ends in a ".". FQDN is ignored in CreateRecord, specify via the Host field instead.
-	Fqdn string `json:"fqdn,omitempty"`
-	// Type is one of the following: A, AAAA, ANAME, CNAME, MX, NS, SRV, or TXT.
-	Type string `json:"type,omitempty"`
-	// Answer is either the IP address for A or AAAA records; the target for ANAME, CNAME, MX, or NS records; the text for TXT records.
-	// For SRV records, answer has the following format: "{weight} {port} {target}" e.g. "1 5061 sip.example.org".
-	Answer string `json:"answer,omitempty"`
-	// TTL is the time this record can be cached for in seconds. Name.com allows a minimum TTL of 300, or 5 minutes.
-	TTL uint32 `json:"ttl,omitempty"`
-	// Priority is only required for MX and SRV records, it is ignored for all others.
-	Priority uint32 `json:"priority,omitempty"`
-}
-
-// ListRecordsRequest requests a list of records that exist for the domain
-type ListRecordsRequest struct {
-	// DomainName is the zone to list the records for.
-	DomainName string `json:"domainName,omitempty"`
-	// Per Page is the number of records to return per request. Per Page defaults to 1,000.
-	PerPage int32 `json:"perPage,omitempty"`
-	// Page is which page to return
-	Page int32 `json:"page,omitempty"`
-}
-
-// ListRecordsResponse is the response for the ListRecords function.
-type ListRecordsResponse struct {
-	// Records contains the records in the zone
-	Records []*Record `json:"records,omitempty"`
-	// NextPage is the identifier for the next page of results. It is only populated if there is another page of results after the current page.
-	NextPage int32 `json:"nextPage,omitempty"`
-	// LastPage is the identifier for the final page of results. It is only populated if there is another page of results after the current page.
-	LastPage int32 `json:"lastPage,omitempty"`
-}
-
-// GetRecordRequest requests the record identified by id and domain.
-type GetRecordRequest struct {
-	// DomainName is the zone the record exists in
-	DomainName string `json:"domainName,omitempty"`
-	// ID is the server-assigned unique identifier for this record
-	ID int32 `json:"id,omitempty"`
-}
-
-// DeleteRecordRequest deletes a specific record
-type DeleteRecordRequest struct {
-	// DomainName is the zone that the record to be deleted exists in.
-	DomainName string `json:"domainName,omitempty"`
-	// ID is the server-assigned unique identifier for the Record to be deleted. If the Record with that ID does not exist in the specified Domain, an error is returned.
-	ID int32 `json:"id,omitempty"`
-}
-
-// DNSSEC contains all the data required to create a DS record at the registry.
-type DNSSEC struct {
-	// DomainName is the domain name.
-	DomainName string `json:"domainName,omitempty"`
-	// KeyTag contains the key tag value of the DNSKEY RR that validates this signature. The algorithm to generate it is here: https://tools.ietf.org/html/rfc4034#appendix-B
-	KeyTag int32 `json:"keyTag,omitempty"`
-	// Algorithm is an integer identifying the algorithm used for signing. Valid values can be found here: https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml
-	Algorithm int32 `json:"algorithm,omitempty"`
-	// DigestType is an integer identifying the algorithm used to create the digest. Valid values can be found here: https://www.iana.org/assignments/ds-rr-types/ds-rr-types.xhtml
-	DigestType int32 `json:"digestType,omitempty"`
-	// Digest is a digest of the DNSKEY RR that is registered with the registry.
-	Digest string `json:"digest,omitempty"`
-}
-
-// ListDNSSECsRequest contains the domain name to list DS records for.
-type ListDNSSECsRequest struct {
-	// DomainName is the domain name to list keys for.
-	DomainName string `json:"domainName,omitempty"`
-}
-
-// ListDNSSECsResponse contains the list of DS records at the registry.
-type ListDNSSECsResponse struct {
-	// Dnssec is the list of registered DNSSEC keys.
-	Dnssec []*DNSSEC `json:"dnssec,omitempty"`
-	// NextPage is the identifier for the next page of results. It is only populated if there is another page of results after the current page.
-	NextPage int32 `json:"nextPage,omitempty"`
-	// LastPage is the identifier for the final page of results. It is only populated if there is another page of results after the current page.
-	LastPage int32 `json:"lastPage,omitempty"`
-}
-
-// GetDNSSECRequest gets the information for a specific DS record at the registry.
-type GetDNSSECRequest struct {
-	// DomainName is the domain name.
-	DomainName string `json:"domainName,omitempty"`
-	// Digest is the digest for the DNSKEY RR to retrieve.
-	Digest string `json:"digest,omitempty"`
-}
-
-// DeleteDNSSECRequest specifies the domain name and digest to remove from the registry.
-type DeleteDNSSECRequest struct {
-	// DomainName is the domain name the key is registered for.
-	DomainName string `json:"domainName,omitempty"`
-	// Digest is the digest for the DNSKEY RR to remove from the registry.
-	Digest string `json:"digest,omitempty"`
 }
 
 // Contact contains all the contact data.
@@ -295,7 +202,7 @@ type Domain struct {
 	Contacts *Contacts `json:"contacts,omitempty"`
 	// PrivacyEnabled reflects if Whois Privacy is enabled for this domain.
 	PrivacyEnabled bool `json:"privacyEnabled,omitempty"`
-	// Locked indicates that the domain cannot be transfered to another registrar.
+	// Locked indicates that the domain cannot be transferred to another registrar.
 	Locked bool `json:"locked,omitempty"`
 	// AutorenewEnabled indicates if the domain will attempt to renew automatically before expiration.
 	AutorenewEnabled bool `json:"autorenewEnabled,omitempty"`
@@ -491,6 +398,18 @@ type DisableAutorenewForDomainRequest struct {
 	DomainName string `json:"domainName,omitempty"`
 }
 
+// EnableWhoisPrivacyForDomainRequest is used to pass the domain name to the EnableWhoisPrivacyForDomain function.
+type EnableWhoisPrivacyForDomainRequest struct {
+	// DomainName is the domain name to enable whoisprivacy for.
+	DomainName string `json:"domainName,omitempty"`
+}
+
+// DisableWhoisPrivacyForDomainRequest is used to pass the domain name to the DisableWhoisPrivacyForDomain function.
+type DisableWhoisPrivacyForDomainRequest struct {
+	// DomainName is the domain name to disable whoisprivacy for.
+	DomainName string `json:"domainName,omitempty"`
+}
+
 // LockDomainRequest is used to pass the domain name to the LockDomain function.
 type LockDomainRequest struct {
 	// DomainName is the domain name to lock.
@@ -501,6 +420,111 @@ type LockDomainRequest struct {
 type UnlockDomainRequest struct {
 	// DomainName is the domain name to unlock.
 	DomainName string `json:"domainName,omitempty"`
+}
+
+// Record is an individual DNS resource record.
+type Record struct {
+	// Unique record id. Value is ignored on Create, and must match the URI on Update.
+	ID int32 `json:"id,omitempty"`
+	// DomainName is the zone that the record belongs to.
+	DomainName string `json:"domainName,omitempty"`
+	// Host is the hostname relative to the zone: e.g. for a record for blog.example.org, domain would be "example.org" and host would be "blog".
+	// An apex record would be specified by either an empty host "" or "@".
+	// A SRV record would be specified by "_{service}._{protocal}.{host}": e.g. "_sip._tcp.phone" for _sip._tcp.phone.example.org.
+	Host string `json:"host,omitempty"`
+	// FQDN is the Fully Qualified Domain Name. It is the combination of the host and the domain name. It always ends in a ".". FQDN is ignored in CreateRecord, specify via the Host field instead.
+	Fqdn string `json:"fqdn,omitempty"`
+	// Type is one of the following: A, AAAA, ANAME, CNAME, MX, NS, SRV, or TXT.
+	Type string `json:"type,omitempty"`
+	// Answer is either the IP address for A or AAAA records; the target for ANAME, CNAME, MX, or NS records; the text for TXT records.
+	// For SRV records, answer has the following format: "{weight} {port} {target}" e.g. "1 5061 sip.example.org".
+	Answer string `json:"answer,omitempty"`
+	// TTL is the time this record can be cached for in seconds. Name.com allows a minimum TTL of 300, or 5 minutes.
+	TTL uint32 `json:"ttl,omitempty"`
+	// Priority is only required for MX and SRV records, it is ignored for all others.
+	Priority uint32 `json:"priority,omitempty"`
+}
+
+// ListRecordsRequest requests a list of records that exist for the domain
+type ListRecordsRequest struct {
+	// DomainName is the zone to list the records for.
+	DomainName string `json:"domainName,omitempty"`
+	// Per Page is the number of records to return per request. Per Page defaults to 1,000.
+	PerPage int32 `json:"perPage,omitempty"`
+	// Page is which page to return
+	Page int32 `json:"page,omitempty"`
+}
+
+// ListRecordsResponse is the response for the ListRecords function.
+type ListRecordsResponse struct {
+	// Records contains the records in the zone
+	Records []*Record `json:"records,omitempty"`
+	// NextPage is the identifier for the next page of results. It is only populated if there is another page of results after the current page.
+	NextPage int32 `json:"nextPage,omitempty"`
+	// LastPage is the identifier for the final page of results. It is only populated if there is another page of results after the current page.
+	LastPage int32 `json:"lastPage,omitempty"`
+}
+
+// GetRecordRequest requests the record identified by id and domain.
+type GetRecordRequest struct {
+	// DomainName is the zone the record exists in
+	DomainName string `json:"domainName,omitempty"`
+	// ID is the server-assigned unique identifier for this record
+	ID int32 `json:"id,omitempty"`
+}
+
+// DeleteRecordRequest deletes a specific record
+type DeleteRecordRequest struct {
+	// DomainName is the zone that the record to be deleted exists in.
+	DomainName string `json:"domainName,omitempty"`
+	// ID is the server-assigned unique identifier for the Record to be deleted. If the Record with that ID does not exist in the specified Domain, an error is returned.
+	ID int32 `json:"id,omitempty"`
+}
+
+// DNSSEC contains all the data required to create a DS record at the registry.
+type DNSSEC struct {
+	// DomainName is the domain name.
+	DomainName string `json:"domainName,omitempty"`
+	// KeyTag contains the key tag value of the DNSKEY RR that validates this signature. The algorithm to generate it is here: https://tools.ietf.org/html/rfc4034#appendix-B
+	KeyTag int32 `json:"keyTag,omitempty"`
+	// Algorithm is an integer identifying the algorithm used for signing. Valid values can be found here: https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml
+	Algorithm int32 `json:"algorithm,omitempty"`
+	// DigestType is an integer identifying the algorithm used to create the digest. Valid values can be found here: https://www.iana.org/assignments/ds-rr-types/ds-rr-types.xhtml
+	DigestType int32 `json:"digestType,omitempty"`
+	// Digest is a digest of the DNSKEY RR that is registered with the registry.
+	Digest string `json:"digest,omitempty"`
+}
+
+// ListDNSSECsRequest contains the domain name to list DS records for.
+type ListDNSSECsRequest struct {
+	// DomainName is the domain name to list keys for.
+	DomainName string `json:"domainName,omitempty"`
+}
+
+// ListDNSSECsResponse contains the list of DS records at the registry.
+type ListDNSSECsResponse struct {
+	// Dnssec is the list of registered DNSSEC keys.
+	Dnssec []*DNSSEC `json:"dnssec,omitempty"`
+	// NextPage is the identifier for the next page of results. It is only populated if there is another page of results after the current page.
+	NextPage int32 `json:"nextPage,omitempty"`
+	// LastPage is the identifier for the final page of results. It is only populated if there is another page of results after the current page.
+	LastPage int32 `json:"lastPage,omitempty"`
+}
+
+// GetDNSSECRequest gets the information for a specific DS record at the registry.
+type GetDNSSECRequest struct {
+	// DomainName is the domain name.
+	DomainName string `json:"domainName,omitempty"`
+	// Digest is the digest for the DNSKEY RR to retrieve.
+	Digest string `json:"digest,omitempty"`
+}
+
+// DeleteDNSSECRequest specifies the domain name and digest to remove from the registry.
+type DeleteDNSSECRequest struct {
+	// DomainName is the domain name the key is registered for.
+	DomainName string `json:"domainName,omitempty"`
+	// Digest is the digest for the DNSKEY RR to remove from the registry.
+	Digest string `json:"digest,omitempty"`
 }
 
 // EmailForwarding contains all the information for an email forwarding entry.
@@ -565,13 +589,101 @@ type HelloResponse struct {
 	ServerTime string `json:"serverTime,omitempty"`
 }
 
+// OrderItem contains all the order item data.
+type OrderItem struct {
+	// Id is the unique identifier of the order item.
+	ID int32 `json:"id,omitempty"`
+	// Status indicates state of the order ('success', 'failed', 'refunded').
+	Status string `json:"status,omitempty"`
+	// Name is name of the item ('example.ninja').
+	Name string `json:"name,omitempty"`
+	// Tld is (optional) tld of domain name, if applicable ('ninja').
+	Tld string `json:"tld,omitempty"`
+	// Type is type of  the item ('registration', 'whois_privacy').
+	Type string `json:"type,omitempty"`
+	// Price is the final price of the item.
+	Price float32 `json:"price,omitempty"`
+	// PriceNonUsd is the price of the item if order has non-usd currency.
+	PriceNonUsd float32 `json:"priceNonUsd,omitempty"`
+	// OriginalPrice is the original price of the item before discounts.
+	OriginalPrice float32 `json:"originalPrice,omitempty"`
+	// TaxAmount is the tax charged for this item, if applicable.
+	TaxAmount float32 `json:"taxAmount,omitempty"`
+	// Quantity is the number of items.
+	Quantity int32 `json:"quantity,omitempty"`
+	// Duration is the number of intervals.
+	Duration int32 `json:"duration,omitempty"`
+	// Interval is the  unit of time ("year", "month").
+	Interval string `json:"interval,omitempty"`
+}
+
+// Order contains all the data for an order.
+type Order struct {
+	// Id is the unique identifier of the order.
+	ID int32 `json:"id,omitempty"`
+	// CreateDate is the date the order was placed.
+	CreateDate string `json:"createDate,omitempty"`
+	// Registrar is registrar with which order is placed.
+	Registrar string `json:"registrar,omitempty"`
+	// Status indicates the state of the order ('success', 'failed').
+	Status string `json:"status,omitempty"`
+	// Currency indicates currency of the order ('USD', 'CNY').
+	Currency string `json:"currency,omitempty"`
+	// OrderItems is the collection of 1 or more items in the order.
+	OrderItems []*OrderItem `json:"orderItems,omitempty"`
+	// AuthAmount is the amount authorized to complete the order purchase.
+	AuthAmount float32 `json:"authAmount,omitempty"`
+	// TotalCapture is the amount captured.
+	TotalCapture float32 `json:"totalCapture,omitempty"`
+	// TotalRefund is the amount, if any, refunded.  Default is 0.00.  If 0.00, this field is not included in response.
+	TotalRefund float32 `json:"totalRefund,omitempty"`
+	// FinalAmount is the final amount of the order, after discounts and refunds.
+	FinalAmount string `json:"finalAmount,omitempty"`
+	// CurrencyRate is the conversion rate from USD to order's currency.  This field is only populated if order's currency is non-USD.
+	CurrencyRate float32 `json:"currencyRate,omitempty"`
+}
+
+// ListOrdersRequest is used to pass the pagination parameters to the ListOrders function.
+type ListOrdersRequest struct {
+	// Per Page is the number of records to return per request. Per Page defaults to 1,000.
+	PerPage int32 `json:"perPage,omitempty"`
+	// Page is which page to return
+	Page int32 `json:"page,omitempty"`
+}
+
+// ListOrdersResponse is the response from a list request, it contains the paginated list of Orders.
+type ListOrdersResponse struct {
+	// ParentAccountId field is populated when requesting account has a parent account id.
+	ParentAccountID int32 `json:"parentAccountId,omitempty"`
+	// Orders is the collection of orders, if any, in the requesting account.
+	Orders []*Order `json:"orders,omitempty"`
+	// NextPage is the identifier for the next page of results. It is only populated if there is another page of results after the current page.
+	NextPage int32 `json:"nextPage,omitempty"`
+	// LastPage is the identifier for the final page of results. It is only populated if there is another page of results after the current page.
+	LastPage int32 `json:"lastPage,omitempty"`
+}
+
+// GetOrderRequest specifies the order id to request data for in the GetOrder function.
+type GetOrderRequest struct {
+	// OrderId is the unique identifier of the requested order.
+	OrderID int32 `json:"orderId,omitempty"`
+}
+
+// GetOrderResponse is the response from a specific order request.
+type GetOrderResponse struct {
+	// ParentAccountId is populated when requesting account has a parent account id.
+	ParentAccountID int32 `json:"parentAccountId,omitempty"`
+	// Order is the order requested.
+	Order *Order `json:"order,omitempty"`
+}
+
 // Transfer contains the information related to a transfer of a domain name to Name.com.
 type Transfer struct {
 	// DomainName is the domain to be transfered to Name.com.
 	DomainName string `json:"domainName,omitempty"`
 	// Email is the email address that the approval email was sent to. Not every TLD requries an approval email. This is usaully pulled from Whois.
 	Email string `json:"email,omitempty"`
-	// Status is the current status of the transfer. Details about statuses can be found in the following Knowledge Base article: <https://www.name.com/support/articles/115012519688-Transfer-status-FAQ>.
+	// Status is the current status of the transfer. Details about statuses can be found in the following Knowledge Base article: <https://www.name.com/support/articles/115012519688-transfer-status-faq>.
 	Status string `json:"status,omitempty"`
 }
 

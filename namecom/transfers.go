@@ -84,7 +84,7 @@ func (n *NameCom) CreateTransfer(request *CreateTransferRequest) (*CreateTransfe
 
 // CancelTransfer cancels a pending transfer request and refunds the amount to account credit.
 func (n *NameCom) CancelTransfer(request *CancelTransferRequest) (*Transfer, error) {
-	endpoint := fmt.Sprintf("/v4/transfers")
+	endpoint := fmt.Sprintf("/v4/transfers/%s:cancel", request.DomainName)
 
 	post := &bytes.Buffer{}
 	err := json.NewEncoder(post).Encode(request)
