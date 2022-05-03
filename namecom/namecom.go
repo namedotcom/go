@@ -348,6 +348,26 @@ type AuthCodeResponse struct {
 	AuthCode string `json:"authCode,omitempty"`
 }
 
+// PricingRequest specifies the domain name to request data for in the GetDomain function.
+type PricingRequest struct {
+	// DomainName is the domain to retrieve.
+	DomainName string `json:"domainName,omitempty"`
+	// Years is for how many years to get pricing for the domain. Years defaults to 1 if not passed and cannot be more than 10.
+	Years int32 `json:"years,omitempty"`
+}
+
+// PricingResponse returns the Pricing related information from the GetPricingForDomain function.
+type PricingResponse struct {
+	// PurchasePrice is the price you will pay to register a domain. Can be passed in the CreateDomain request.
+	PurchasePrice float64 `json:"purchasePrice,omitempty"`
+	// RenewalPrice is the price you will pay to renew a domain. Can be passed in the RenewDomain request.
+	RenewalPrice float64 `json:"renewalPrice,omitempty"`
+	// TransferPrice is the price you will pay to transfer a domain. Can be passed in the CreateTransfer request. The TransferPrice is always for 1 year regardless of the years input.
+	TransferPrice float64 `json:"transferPrice,omitempty"`
+	// Premium indicates that this pricing is a premium result and the respective prices must be passed in create, renew or transfer commands.
+	Premium bool `json:"premium,omitempty"`
+}
+
 // PrivacyRequest passes the domain name as well as the purchase parameters to the PurchasePrivacy function.
 type PrivacyRequest struct {
 	// DomainName is the domain to purchase Whois Privacy for.

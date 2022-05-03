@@ -207,6 +207,30 @@ func (n *NameCom) RenewDomain(request *RenewDomainRequest) (*RenewDomainResponse
 	return resp, nil
 }
 
+// GetDomainPricing returns pricing of a taken or available domain.
+func (n *NameCom) GetPricingForDomain(request *PricingRequest) (*PricingResponse, error) {
+	endpoint := fmt.Sprintf("/v4/domains/%s:getPricing", request.DomainName)
+
+	values := url.Values{}
+	if request.Years != 0 {
+		values.Set("years", fmt.Sprintf("%d", request.Years))
+	}
+
+	body, err := n.get(endpoint, values)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &PricingResponse{}
+
+	err = json.NewDecoder(body).Decode(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 // GetAuthCodeForDomain returns the Transfer Authorization Code for the domain.
 func (n *NameCom) GetAuthCodeForDomain(request *AuthCodeRequest) (*AuthCodeResponse, error) {
 	endpoint := fmt.Sprintf("/v4/domains/%s:getAuthCode", request.DomainName)
