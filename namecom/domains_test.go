@@ -458,3 +458,37 @@ func TestSearchStreamForDomain(t *testing.T) {
 		t.Errorf("Expected 'example.org', got %s", SearchResponse.DomainName)
 	}
 }
+
+func TestGetPricingForDomain(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v4/domains/example.org:getPricing" {
+			t.Errorf("Expected to request '/v4/domains/example.com:getPricing', got: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		//not sure why this has to be done like this
+		resp := &PricingResponse{PurchasePrice: 4.99, RenewalPrice: 4.99, TransferPrice: 4.99}
+		jData, err := json.Marshal(resp)
+		if err != nil {
+			t.Error("Could not marshal response")
+		}
+		w.Write(jData)
+	}))
+	defer server.Close()
+
+	nc := Mock("username", "apitoken", server.URL)
+	PricingResponse, err := nc.GetPricingForDomain(&PricingRequest{DomainName: "example.org"})
+	if err != nil {
+		t.Errorf("Expected 'example.org', got %s", err.Error())
+	}
+	if PricingResponse.PurchasePrice != 4.99 {
+		t.Errorf("Expected '4.99', got %f", PricingResponse.PurchasePrice)
+	}
+
+	if PricingResponse.RenewalPrice != 4.99 {
+		t.Errorf("Expected '4.99', got %f", PricingResponse.RenewalPrice)
+	}
+
+	if PricingResponse.TransferPrice != 4.99 {
+		t.Errorf("Expected '4.99', got %f", PricingResponse.TransferPrice)
+	}
+}
